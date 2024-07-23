@@ -1,0 +1,91 @@
+import sys
+
+# 去除警告
+import warnings
+
+from PyQt5.QtGui import QMouseEvent
+from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox
+from PyQt5.QtCore import Qt, QCoreApplication, QRect, QPoint
+
+from pyqt5.utils.utils import get_real_resolution
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+from mainWindow import Ui_MainWindow
+
+
+class MainWindow(QMainWindow, Ui_MainWindow):
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
+
+        self._startPos = None
+        self._isTracking = None
+        self._endPos = None
+
+        # 设置无边框
+        self.setWindowFlag(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+
+        self.setupUi(self)
+
+        # 绑定按钮事件
+        self.pushButton_close.clicked.connect(self.queryExit)
+        self.pushButton_normal.clicked.connect(self.minimizedOrNormal)
+        self.pushButton_minimize.clicked.connect(self.showMinimized)
+
+    # 关闭窗口
+    def queryExit(self):
+        res = QMessageBox.question(self, "Warning", "Quit?", QMessageBox.Yes | QMessageBox.Cancel)
+        if res == QMessageBox.Yes:
+            QCoreApplication.instance().exit()
+
+    # 最小化或放大窗口
+    def minimizedOrNormal(self):
+        if self.isMaximized():
+            self.showNormal()
+            self.resize(1440, 810)
+            self.frame_main.setGeometry(QRect(0, 0, 1440, 810))
+        else:
+            # 自定义函数动态获取屏幕分辨率
+            width, height = get_real_resolution()
+            self.resize(width, height)
+            self.frame_main.setGeometry(QRect(0, 0, width, height))
+            self.showMaximized()
+
+    # 鼠标移动事件
+    def mouseMoveEvent(self, a0: QMouseEvent):
+        if self._startPos:
+            self._endPos = a0.pos() - self._startPos
+            # 移动窗口
+            self.move(self.pos() + self._endPos)
+
+    # 鼠标按下事件
+    def mousePressEvent(self, a0: QMouseEvent):
+        # 根据鼠标按下时的位置判断是否在QFrame范围内
+        if self.childAt(a0.pos().x(), a0.pos().y()).objectName() == "frame_title":
+            # 判断鼠标按下的是左键
+            if a0.button() == Qt.LeftButton:
+                self._isTracking = True
+                # 记录初始位置
+                self._startPos = QPoint(a0.x(), a0.y())
+
+    # 鼠标松开事件
+    def mouseReleaseEvent(self, a0: QMouseEvent):
+        if a0.button() == Qt.LeftButton:
+            self._isTracking = False
+            self._startPos = None
+            self._endPos = None
+
+    # 鼠标双击事件
+    def mouseDoubleClickEvent(self, a0: QMouseEvent):
+        if self.childAt(a0.pos().x(), a0.pos().y()).objectName() == "frame_title":
+            if a0.button() == Qt.LeftButton:
+                self.minimizedOrNormal()
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+
+    main_window = MainWindow()
+    main_window.show()
+    sys.exit(app.exec_())
