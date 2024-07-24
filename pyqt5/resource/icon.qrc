@@ -1,0 +1,18 @@
+<RCC>
+  <qresource prefix="icon">
+    <file>icon/stop.png</file>
+    <file>icon/industry-safety.png</file>
+    <file>icon/folder.png</file>
+    <file>icon/image-text.png</file>
+    <file>icon/left-double-arrow-back.png</file>
+    <file>icon/media.png</file>
+    <file>icon/play.png</file>
+    <file>icon/right-double-arrow.png</file>
+    <file>icon/suspend-pause.png</file>
+    <file>icon/square.png</file>
+    <file>./icon/close.png</file>
+    <file>./icon/full_screen.png</file>
+    <file>./icon/minimize_2.png</file>
+    <file>./icon/minimize.png</file>
+  </qresource>
+</RCC>

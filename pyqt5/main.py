@@ -3,8 +3,8 @@ import sys
 # 去除警告
 import warnings
 
-from PyQt5.QtGui import QMouseEvent
-from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox
+from PyQt5.QtGui import QMouseEvent, QIcon, QPixmap
+from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QHeaderView
 from PyQt5.QtCore import Qt, QCoreApplication, QRect, QPoint
 
 from pyqt5.utils.utils import get_real_resolution
@@ -33,6 +33,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_normal.clicked.connect(self.minimizedOrNormal)
         self.pushButton_minimize.clicked.connect(self.showMinimized)
 
+        # 自适父组件设置表格列宽
+        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
     # 关闭窗口
     def queryExit(self):
         res = QMessageBox.question(self, "Warning", "Quit?", QMessageBox.Yes | QMessageBox.Cancel)
@@ -42,15 +45,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # 最小化或放大窗口
     def minimizedOrNormal(self):
         if self.isMaximized():
+            # 修改窗口大小
             self.showNormal()
             self.resize(1440, 810)
             self.frame_main.setGeometry(QRect(0, 0, 1440, 810))
+            # 修改图标
+            icon = QIcon()
+            icon.addPixmap(QPixmap(":/icon/icon/square.png"), QIcon.Normal, QIcon.Off)
+            self.pushButton_normal.setIcon(icon)
         else:
             # 自定义函数动态获取屏幕分辨率
+            # 修改窗口大小
             width, height = get_real_resolution()
             self.resize(width, height)
             self.frame_main.setGeometry(QRect(0, 0, width, height))
             self.showMaximized()
+            # 修改图标
+            icon = QIcon()
+            icon.addPixmap(QPixmap(":/icon/icon/minimize_2.png"), QIcon.Normal, QIcon.Off)
+            self.pushButton_normal.setIcon(icon)
 
     # 鼠标移动事件
     def mouseMoveEvent(self, a0: QMouseEvent):
@@ -81,6 +94,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.childAt(a0.pos().x(), a0.pos().y()).objectName() == "frame_title":
             if a0.button() == Qt.LeftButton:
                 self.minimizedOrNormal()
+
+    def adjustTableSize(self):
+        for column in range(self.tableWidget.columnCount()):
+            self.tableWidget.resizeColumnToContents(column)
 
 
 if __name__ == '__main__':
