@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="image">
+    <file>image/origin_hd156.jpg</file>
+    <file>image/detect_hd156.jpg</file>
+    <file>image/qtlogo.jpg</file>
+    <file>image/logo.png</file>
+  </qresource>
+</RCC>

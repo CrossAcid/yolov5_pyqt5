@@ -3,16 +3,17 @@ import sys
 # 去除警告
 import warnings
 
-from PyQt5.QtGui import QMouseEvent, QIcon, QPixmap
-from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QHeaderView
-from PyQt5.QtCore import Qt, QCoreApplication, QRect, QPoint
+import cv2
+from PyQt5.QtGui import QMouseEvent, QIcon, QPixmap, QColor, QImage
+from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QHeaderView, QLabel
+from PyQt5.QtCore import Qt, QCoreApplication, QRect, QPoint, QSize
 
+from pyqt5.ResizableLabel import ResizableLabel
 from pyqt5.utils.utils import get_real_resolution
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from mainWindow import Ui_MainWindow
-
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -34,7 +35,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_minimize.clicked.connect(self.showMinimized)
 
         # 自适父组件设置表格列宽
-        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+        self.statusBar.showMessage('正常')
+
+        # self.label_origin = ResizableLabel(self.splitter)
+        # img_src = cv2.imread('./resource/image/origin_hd156.jpg')
+        # self.show_image(img_src, self.label_origin)
+        pixmap = QPixmap("./resource/image/origin_hd156.jpg")
+        self.label_origin.setPixmap(pixmap)
+        #
+        # self.label_detect = ResizableLabel(self.splitter)
+        pixmap2 = QPixmap("./resource/image/detect_hd156.jpg")
+        self.label_detect.setPixmap(pixmap2)
 
     # 关闭窗口
     def queryExit(self):
@@ -95,9 +108,34 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if a0.button() == Qt.LeftButton:
                 self.minimizedOrNormal()
 
-    def adjustTableSize(self):
-        for column in range(self.tableWidget.columnCount()):
-            self.tableWidget.resizeColumnToContents(column)
+    def show_image(self, img_src, label):
+        try:
+            ih, iw, _ = img_src.shape
+            w = label.geometry().width()
+            h = label.geometry().height()
+            print(iw, w, ih, h)
+            # keep original aspect ratio
+            if iw / w > ih / h:
+                scal = w / iw
+                nw = w
+                nh = int(scal * ih)
+                img_src_ = cv2.resize(img_src, (nw, nh))
+
+            else:
+                scal = h / ih
+                nw = int(scal * iw)
+                nh = h
+                img_src_ = cv2.resize(img_src, (nw, nh))
+
+            frame = cv2.cvtColor(img_src_, cv2.COLOR_BGR2RGB)
+            img = QImage(frame.data, frame.shape[1], frame.shape[0], frame.shape[2] * frame.shape[1],
+                         QImage.Format_RGB888)
+            label.setPixmap(QPixmap.fromImage(img))
+
+        except Exception as e:
+            print(repr(e))
+
+
 
 
 if __name__ == '__main__':
