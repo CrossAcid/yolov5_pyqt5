@@ -4,8 +4,9 @@ import sys
 import warnings
 
 import cv2
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QMouseEvent, QIcon, QPixmap, QColor, QImage
-from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QHeaderView, QLabel
+from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QHeaderView, QLabel, QWidget
 from PyQt5.QtCore import Qt, QCoreApplication, QRect, QPoint, QSize
 
 from pyqt5.ResizableLabel import ResizableLabel
@@ -14,6 +15,7 @@ from pyqt5.utils.utils import get_real_resolution
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from mainWindow import Ui_MainWindow
+
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -34,19 +36,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_normal.clicked.connect(self.minimizedOrNormal)
         self.pushButton_minimize.clicked.connect(self.showMinimized)
 
-        # 自适父组件设置表格列宽
-        # self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # QSplitter实现图片自由缩放
+        self.label_origin = ResizableLabel(self.splitter)
+        self.label_detect = ResizableLabel(self.splitter)
 
-        self.statusBar.showMessage('正常')
+        self.load_images()
 
-        # self.label_origin = ResizableLabel(self.splitter)
-        # img_src = cv2.imread('./resource/image/origin_hd156.jpg')
-        # self.show_image(img_src, self.label_origin)
-        pixmap = QPixmap("./resource/image/origin_hd156.jpg")
-        self.label_origin.setPixmap(pixmap)
-        #
-        # self.label_detect = ResizableLabel(self.splitter)
-        pixmap2 = QPixmap("./resource/image/detect_hd156.jpg")
+    def load_images(self):
+        pixmap1 = QPixmap('resource/image/origin_hd156.jpg')
+        pixmap2 = QPixmap('resource/image/detect_hd156.jpg')
+
+        self.label_origin.setPixmap(pixmap1)
         self.label_detect.setPixmap(pixmap2)
 
     # 关闭窗口
@@ -107,35 +107,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.childAt(a0.pos().x(), a0.pos().y()).objectName() == "frame_title":
             if a0.button() == Qt.LeftButton:
                 self.minimizedOrNormal()
-
-    def show_image(self, img_src, label):
-        try:
-            ih, iw, _ = img_src.shape
-            w = label.geometry().width()
-            h = label.geometry().height()
-            print(iw, w, ih, h)
-            # keep original aspect ratio
-            if iw / w > ih / h:
-                scal = w / iw
-                nw = w
-                nh = int(scal * ih)
-                img_src_ = cv2.resize(img_src, (nw, nh))
-
-            else:
-                scal = h / ih
-                nw = int(scal * iw)
-                nh = h
-                img_src_ = cv2.resize(img_src, (nw, nh))
-
-            frame = cv2.cvtColor(img_src_, cv2.COLOR_BGR2RGB)
-            img = QImage(frame.data, frame.shape[1], frame.shape[0], frame.shape[2] * frame.shape[1],
-                         QImage.Format_RGB888)
-            label.setPixmap(QPixmap.fromImage(img))
-
-        except Exception as e:
-            print(repr(e))
-
-
 
 
 if __name__ == '__main__':
