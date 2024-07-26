@@ -18,6 +18,7 @@ from mainWindow import Ui_MainWindow
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
+
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
 
@@ -31,6 +32,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.setupUi(self)
 
+        self.maxAsideWidth = self.frame_left_aside.maximumWidth()
+        self.minAsideWidth = self.frame_left_aside.minimumWidth()
+
         # 绑定按钮事件
         self.pushButton_close.clicked.connect(self.queryExit)
         self.pushButton_normal.clicked.connect(self.minimizedOrNormal)
@@ -39,6 +43,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # QSplitter实现图片自由缩放
         self.label_origin = ResizableLabel(self.splitter)
         self.label_detect = ResizableLabel(self.splitter)
+
+        self.statusBar.showMessage("  simple")
 
         self.load_images()
 
@@ -58,6 +64,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # 最小化或放大窗口
     def minimizedOrNormal(self):
         if self.isMaximized():
+            print(self.splitter.width())
+            print(self.frame_left_aside.width())
             # 修改窗口大小
             self.showNormal()
             self.resize(1440, 810)
@@ -66,7 +74,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             icon = QIcon()
             icon.addPixmap(QPixmap(":/icon/icon/square.png"), QIcon.Normal, QIcon.Off)
             self.pushButton_normal.setIcon(icon)
+            self.frame_left_aside.setMinimumWidth(self.minAsideWidth)
+            self.splitter.setMinimumSize(QtCore.QSize(0, 0))
+
         else:
+            print(self.splitter.width())
+            print(self.frame_left_aside.width())
             # 自定义函数动态获取屏幕分辨率
             # 修改窗口大小
             width, height = get_real_resolution()
@@ -77,6 +90,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             icon = QIcon()
             icon.addPixmap(QPixmap(":/icon/icon/minimize_2.png"), QIcon.Normal, QIcon.Off)
             self.pushButton_normal.setIcon(icon)
+            print(self.maxAsideWidth)
+            self.frame_left_aside.setMinimumWidth(self.maxAsideWidth)
+            self.splitter.setMinimumSize(QtCore.QSize(width - self.frame_left_aside.minimumWidth() - 30, 0))
+
 
     # 鼠标移动事件
     def mouseMoveEvent(self, a0: QMouseEvent):
