@@ -3,14 +3,14 @@ import sys
 # 去除警告
 import warnings
 
-import cv2
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtGui import QMouseEvent, QIcon, QPixmap, QColor, QImage
-from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QHeaderView, QLabel, QWidget
-from PyQt5.QtCore import Qt, QCoreApplication, QRect, QPoint, QSize
+from PyQt5 import QtCore
+from PyQt5.QtGui import QMouseEvent, QIcon, QPixmap
+from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
+from PyQt5.QtCore import Qt, QCoreApplication, QRect, QPoint
 
 from pyqt5.ResizableLabel import ResizableLabel
 from pyqt5.utils.utils import get_real_resolution
+from pyqt5.yoloThread import yoloThread
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -36,24 +36,36 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.minAsideWidth = self.frame_left_aside.minimumWidth()
 
         # 绑定按钮事件
+        # 1.窗口按钮
         self.pushButton_close.clicked.connect(self.queryExit)
         self.pushButton_normal.clicked.connect(self.minimizedOrNormal)
         self.pushButton_minimize.clicked.connect(self.showMinimized)
+        # 2.文件选择按钮
+        self.pushButton_image.clicked.connect(self.inputImage)
+        # 3.检测按钮
+        self.pushButton_play.clicked.connect(self.runOrContinue)
 
         # QSplitter实现图片自由缩放
         self.label_origin = ResizableLabel(self.splitter)
         self.label_detect = ResizableLabel(self.splitter)
 
-        self.statusBar.showMessage("  simple")
+        self.yoloThread = yoloThread()
+        self.yoloThread.send_msg.connect(lambda x: self.showMsg(x))
+        self.yoloThread.send_result.connect(lambda x: self.load_images(x, 1))
 
-        self.load_images()
+        self.imgPath = ''
 
-    def load_images(self):
-        pixmap1 = QPixmap('resource/image/origin_hd156.jpg')
-        pixmap2 = QPixmap('resource/image/detect_hd156.jpg')
-
-        self.label_origin.setPixmap(pixmap1)
-        self.label_detect.setPixmap(pixmap2)
+    def load_images(self, fileName, types=0):
+        if types:
+            print("11111")
+            print(fileName)
+            print("./result" + fileName)
+            pixmap = QPixmap("./result/" + fileName)
+            print(pixmap)
+            self.label_detect.setPixmap(pixmap)
+        else:
+            pixmap = QPixmap(fileName)
+            self.label_origin.setPixmap(pixmap)
 
     # 关闭窗口
     def queryExit(self):
@@ -64,8 +76,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # 最小化或放大窗口
     def minimizedOrNormal(self):
         if self.isMaximized():
-            print(self.splitter.width())
-            print(self.frame_left_aside.width())
             # 修改窗口大小
             self.showNormal()
             self.resize(1440, 810)
@@ -74,12 +84,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             icon = QIcon()
             icon.addPixmap(QPixmap(":/icon/icon/square.png"), QIcon.Normal, QIcon.Off)
             self.pushButton_normal.setIcon(icon)
+            # 修改QSplitter大小从而优化感官
             self.frame_left_aside.setMinimumWidth(self.minAsideWidth)
             self.splitter.setMinimumSize(QtCore.QSize(0, 0))
-
         else:
-            print(self.splitter.width())
-            print(self.frame_left_aside.width())
             # 自定义函数动态获取屏幕分辨率
             # 修改窗口大小
             width, height = get_real_resolution()
@@ -90,10 +98,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             icon = QIcon()
             icon.addPixmap(QPixmap(":/icon/icon/minimize_2.png"), QIcon.Normal, QIcon.Off)
             self.pushButton_normal.setIcon(icon)
-            print(self.maxAsideWidth)
+            # 修改QSplitter大小从而优化感官
             self.frame_left_aside.setMinimumWidth(self.maxAsideWidth)
             self.splitter.setMinimumSize(QtCore.QSize(width - self.frame_left_aside.minimumWidth() - 30, 0))
-
 
     # 鼠标移动事件
     def mouseMoveEvent(self, a0: QMouseEvent):
@@ -124,6 +131,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.childAt(a0.pos().x(), a0.pos().y()).objectName() == "frame_title":
             if a0.button() == Qt.LeftButton:
                 self.minimizedOrNormal()
+
+    def inputImage(self):
+        print("button clicked")
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择文件", "", "JPG Files (*.jpg);;PNG Files (*.png)")
+        self.load_images(file_path)
+        self.imgPath = file_path
+
+    def showMsg(self, message):
+        self.statusBar.showMessage("  " + message)
+
+    def runOrContinue(self):
+        if self.imgPath != '':
+            self.yoloThread.run(source=self.imgPath)
+        else:
+            self.showMsg('未选择图片或视频')
 
 
 if __name__ == '__main__':
